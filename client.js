@@ -12,13 +12,11 @@ const rl = readline.createInterface({
 })
 
 const client = new Socket()
-const client_address = `${client.localAddress}:${client.localPort}`
 
 client.on('data', (data) => {
   rl.pause()
   const message = data.toString()
-  //if(!message.startsWith(client_address))
-    process.stdout.write('\n')
+  process.stdout.write('\n')
   resetCursor()
   console.log(message)
   process.stdout.write(msg_prompt)
@@ -29,12 +27,8 @@ client.connect(port, host, async () => {
   console.log(`Connected to server at ${server_address}`)
   while(true) {
     const message = await prompt(msg_prompt)
-    if(message.length === 0) {
-      resetCursor()
-      continue
-    }
+    if(message.length === 0) continue
     resetCursor()
-    //readline.clearLine(process.stdout, 0)
     client.write(message)
     await awaitData().catch(timedOut)
   }
@@ -65,10 +59,4 @@ async function prompt(query) {
   return new Promise(resolve => rl.question(query, ans => {
     resolve(ans)
   }))
-}
-
-function clearLine(n) {
-  process.stdout.write('\r')
-  for(let i = 0; i < n; ++i)
-    process.stdout.write('\127')
 }

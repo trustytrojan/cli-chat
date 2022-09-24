@@ -30,6 +30,10 @@ server.listen(port)
 
 console.log(`Listening on ${port}`)
 
+while(true) {
+  
+}
+
 function announce(message) {
   const announcement = `<Server> ${message}`
   console.log(announcement)

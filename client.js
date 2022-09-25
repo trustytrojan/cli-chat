@@ -1,37 +1,20 @@
 const { Socket } = require('net')
 const readline = require('readline')
-const { existsSync, writeFileSync } = require('fs')
-const { stdin, stdout, stderr } = process
+// const { existsSync, writeFileSync } = require('fs')
+const { stdin, stdout, stderr, exit, argv } = process
 
-const config_filename = './chat-client-config.json'
-
-let host, port, name
-if(existsSync(config_filename)) {
-  console.log(`Reading config file...`)
-  ;({ host, port, name } = require(config_filename))
-  let config_errors = ''
-  if(typeof host !== 'string')
-    config_errors += `  Property "host" must be of type string.\n    Example: "host": "1.2.3.4"\n`
-  if(typeof port !== 'number')
-    config_errors += `  Property "port" must be a number.\n    Example: "port": 12345\n`
-  if(typeof name !== 'string')
-    config_errors += `  Property "host" must be a string.\n    Example: "name": "johndoe"\n`
-  if(name.length === 0)
-    config_errors += `  Property "name" is an empty string. You need a name to chat.\n`
-  if(config_errors.length > 0) {
-    console.error('Your configuration file is erroneous! Please read the errors below to fix them.')
-    stderr.write(config_errors)
-    process.exit(1)
-  }
-} else {
-  console.error('Config file does not exist. Creating one now...')
-  writeFileSync(config_filename, JSON.stringify({ host: '1.2.3.4', port: 12345, name: '' }, null, '  '))
-  console.error(`Please edit the generated config file (${config_filename}) and run me again`)
-  process.exit(1)
+if(argv.length < 4) {
+  console.log(`Usage: <program_name> <ip> <port> <username>`)
+  console.log(`\t<ip>\tServer IP address`)
+  console.log(`\t<port>\tServer port`)
+  console.log(`\t<username>\tYour username to be used in chat`)
+  process.exit(0)
 }
 
+const host = argv[2]
+const port = Number.parseInt(argv[3])
+let name = argv[4]
 const server_address = `${host}:${port}`
-const msg_prompt = '> '
 
 const rl = readline.createInterface({
   input: stdin,
@@ -40,37 +23,67 @@ const rl = readline.createInterface({
 
 const socket = new Socket()
 
+let timeout
+
 socket.on('error', (err) => {
   console.error(err)
   console.error(`\nThe error above occurred when connecting to the server.\nPlease make sure you have entered the correct address and port in the config file.`)
-  process.exit(1)
+  exit(1)
 })
 
 socket.on('data', (data) => {
+  const str = data.toString()
+  if(str.startsWith('heartbeat')) {
+    clearTimeout(timeout)
+    timeout = setTimeout(timedOut, 5_000)
+    return
+  }
   rl.pause()
-  const message = data.toString()
   stdout.write('\n')
   resetCursor()
-  console.log(message)
-  stdout.write(msg_prompt)
+  console.log(str)
+  stdout.write(rl.getPrompt())
   rl.resume()
 })
 
 console.log(`Connecting to server at ${server_address}`)
-let timeout = setTimeout(timedOut, 5_000)
+timeout = setTimeout(timedOut, 5_000)
 socket.connect(port, host, async () => {
   clearTimeout(timeout)
   socket.write(`name="${name}"`)
   console.log(`You're connected. Say hi!`)
   while(true) {
-    const message = await prompt(msg_prompt)
-    if(message.length === 0) continue
-    if(message.startsWith)
+    const message = await prompt(`[${name}]> `)
     resetCursor()
+    if(message.length === 0) continue
+    if(message.startsWith('/')) {
+      const args = message.split(' ')
+      commands[args.shift().slice(1)](args)
+      continue
+    }
     socket.write(`${message}`)
     await awaitData().catch(timedOut)
   }
 })
+
+const commands = {
+  help: () => {
+    console.log(`<Client> List of all commands below:`)
+    console.log(`<Client> /help\tDisplays this message`)
+    console.log(`<Client> /leave\tDisconnects from the server`)
+    console.log(`<Client> /name <new_name>\tChange your username in this server to <new_name>`)
+  },
+  leave: () => {
+    socket.destroy()
+    console.log('You have disconnected from the server.')
+    exit(0)
+  },
+  name: async ([ new_name ]) => {
+    socket.write(`new_name="${new_name ?? await prompt(`<Client> Enter your new username: `)}"`)
+    name = new_name
+    await awaitData().catch(timedOut)
+  }
+}
 
 function resetCursor() {
   readline.moveCursor(stdout, 0, -1)
@@ -92,8 +105,8 @@ async function awaitData() {
 }
 
 function timedOut() {
-  console.log('Connection to server timed out')
-  process.exit(1)
+  console.error('\nConnection to server timed out')
+  exit(1)
 }
 
 /**

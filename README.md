@@ -1,7 +1,8 @@
-# nodejs-cli-chat
+# cli-chat
 A TCP command-line chatting program with a client-server framework.
 
-Clone it and run them in node hopefully it works
+## Goal
+To write clients/servers (preferably clients) in as many languages as I can learn
 
-## the networking was not the hard part
+### the networking was not the hard part
 moving the cursor around the terminal was

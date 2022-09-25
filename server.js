@@ -18,7 +18,10 @@ server.on('connection', (socket) => {
       client.write(`[${address}] ${message}`)
   })
 
-  socket.on('end', () => console.log(`Client at ${address} disconnected`))
+  socket.on('end', () => {
+    console.log(`Client at ${address} disconnected`)
+    clients.delete(address)
+  })
 
   socket.on('error', (err) => {
     console.error(`Error involving client ${address}!`)

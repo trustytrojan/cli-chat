@@ -34,12 +34,10 @@ socket.on('error', (err) => {
 })
 
 socket.on('data', (data) => {
+  clearTimeout(timeout)
+  timeout = setTimeout(timedOut, 5_000)
   const str = data.toString()
-  if(str.startsWith('heartbeat')) {
-    clearTimeout(timeout)
-    timeout = setTimeout(timedOut, 5_000)
-    return
-  }
+  if(str === '\0') return
   rl.pause()
   stdout.write('\n')
   resetCursor()
@@ -53,40 +51,16 @@ timeout = setTimeout(timedOut, 5_000)
 
 socket.connect(port, host, async () => {
   clearTimeout(timeout)
-  socket.write(`name="${name}"`)
+  socket.write(`/on_join name="${name}"`)
   console.log(`You're connected. Say hi!`)
   while(true) {
-    const message = await prompt(`[${name}]> `)
+    const str = await prompt(`[${name}]> `)
     resetCursor()
-    if(message.length === 0) continue
-    if(message.startsWith('/')) {
-      const args = message.split(' ')
-      commands[args.shift().slice(1)](args)
-      continue
-    }
-    socket.write(`${message}`)
+    if(str.length === 0) continue
+    socket.write(str)
     await awaitData().catch(timedOut)
   }
 })
-
-const commands = {
-  help: () => {
-    console.log(`<Client> List of all commands below:`)
-    console.log(`<Client> /help\tDisplays this message`)
-    console.log(`<Client> /leave\tDisconnects from the server`)
-    console.log(`<Client> /name <new_name>\tChange your username in this server to <new_name>`)
-  },
-  leave: () => {
-    socket.destroy()
-    console.log('You have disconnected from the server.')
-    exit(0)
-  },
-  name: async ([ new_name ]) => {
-    socket.write(`new_name="${new_name ?? await prompt(`<Client> Enter your new username: `)}"`)
-    name = new_name
-    await awaitData().catch(timedOut)
-  }
-}
 
 function resetCursor() {
   readline.moveCursor(stdout, 0, -1)

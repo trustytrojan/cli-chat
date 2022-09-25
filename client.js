@@ -48,6 +48,7 @@ socket.on('data', (data) => {
 
 console.log(`Connecting to server at ${server_address}`)
 timeout = setTimeout(timedOut, 5_000)
+
 socket.connect(port, host, async () => {
   clearTimeout(timeout)
   socket.write(`name="${name}"`)

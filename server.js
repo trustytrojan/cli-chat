@@ -8,18 +8,24 @@ const clients = new Map()
 
 server.on('connection', (socket) => {
   const address = `${socket.remoteAddress}:${socket.remotePort}`
-  announce(`Client at ${address} connected`)
+  let name
+
   clients.set(address, socket)
 
   socket.on('data', (data) => {
-    const message = data.toString()
-    console.log(`[${address}] ${message}`)
+    const str = data.toString()
+    if(str.startsWith('name=')) {
+      name = str.substring(1+str.indexOf('"'), str.lastIndexOf('"'))
+      announce(`[${name}] connected to the server. Say hi!`)
+      return
+    }
+    console.log(`[${name}]@${address} ${str}`)
     for(const client of clients.values())
-      client.write(`[${address}] ${message}`)
+      client.write(`[${name}] ${str}`)
   })
 
   socket.on('end', () => {
-    console.log(`Client at ${address} disconnected`)
+    announce(`[${name}] has disconnected :(`)
     clients.delete(address)
   })
 

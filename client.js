@@ -1,6 +1,7 @@
 const { Socket } = require('net')
 const readline = require('readline')
 const { existsSync, writeFileSync } = require('fs')
+const { stdin, stdout, stderr } = process
 
 const config_filename = './chat-client-config.json'
 
@@ -19,7 +20,7 @@ if(existsSync(config_filename)) {
     config_errors += `  Property "name" is an empty string. You need a name to chat.\n`
   if(config_errors.length > 0) {
     console.error('Your configuration file is erroneous! Please read the errors below to fix them.')
-    process.stderr.write(config_errors)
+    stderr.write(config_errors)
     process.exit(1)
   }
 } else {
@@ -32,37 +33,49 @@ if(existsSync(config_filename)) {
 const server_address = `${host}:${port}`
 const msg_prompt = '> '
 
-const client = new Socket()
+const rl = readline.createInterface({
+  input: stdin,
+  output: stdout
+})
 
-client.on('error', console.error)
+const socket = new Socket()
 
-client.on('data', (data) => {
+socket.on('error', (err) => {
+  console.error(err)
+  console.error(`\nThe error above occurred when connecting to the server.\nPlease make sure you have entered the correct address and port in the config file.`)
+  process.exit(1)
+})
+
+socket.on('data', (data) => {
   rl.pause()
   const message = data.toString()
-  process.stdout.write('\n')
+  stdout.write('\n')
   resetCursor()
   console.log(message)
-  process.stdout.write(msg_prompt)
+  stdout.write(msg_prompt)
   rl.resume()
 })
 
 console.log(`Connecting to server at ${server_address}`)
-client.connect(port, host, async () => {
+let timeout = setTimeout(timedOut, 5_000)
+socket.connect(port, host, async () => {
+  clearTimeout(timeout)
+  socket.write(`name="${name}"`)
   console.log(`You're connected. Say hi!`)
   while(true) {
     const message = await prompt(msg_prompt)
     if(message.length === 0) continue
     if(message.startsWith)
     resetCursor()
-    client.write(`[${name}] ${message}`)
+    socket.write(`${message}`)
     await awaitData().catch(timedOut)
   }
 })
 
 function resetCursor() {
-  readline.moveCursor(process.stdout, 0, -1)
-  readline.clearLine(process.stdout, 0)
-  readline.cursorTo(process.stdout, 0)
+  readline.moveCursor(stdout, 0, -1)
+  readline.clearLine(stdout, 0)
+  readline.cursorTo(stdout, 0)
 }
 
 /**
@@ -74,7 +87,7 @@ function resetCursor() {
 async function awaitData() {
   return new Promise((resolve, reject) => {
     setTimeout(reject, 5_000)
-    client.once('data', resolve)
+    socket.once('data', resolve)
   })
 }
 

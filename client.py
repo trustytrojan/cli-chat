@@ -3,7 +3,10 @@ from sys import argv
 
 if len(argv) < 4:
   print(f'Usage: {argv[0]} <ip> <port> <username>')
-  exit(1)
+  print('    <ip>           Server IP address')
+  print('    <port>         Server port')
+  print('    <username>     Your username to be used in chat')
+  exit(0)
 
 my_socket = socket()
 

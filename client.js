@@ -4,10 +4,10 @@ const readline = require('readline')
 const { stdin, stdout, stderr, exit, argv } = process
 
 if(argv.length < 4) {
-  console.log(`Usage: <program_name> <ip> <port> <username>`)
-  console.log(`\t<ip>\tServer IP address`)
-  console.log(`\t<port>\tServer port`)
-  console.log(`\t<username>\tYour username to be used in chat`)
+  console.log(`Usage: <program_name> <ip> <port> <username>      
+    <ip>           Server IP address
+    <port>         Server port
+    <username>     Your username to be used in chat`)
   process.exit(0)
 }
 

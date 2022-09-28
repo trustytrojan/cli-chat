@@ -38,9 +38,6 @@ socket.on('data', (data) => {
   timeout = setTimeout(timedOut, 5_000)
   const str = data.toString()
   if(str === '\0') return
-  if(str.startsWith('/')) {
-
-  }
   rl.pause()
   stdout.write('\n')
   resetCursor()
@@ -49,17 +46,12 @@ socket.on('data', (data) => {
   rl.resume()
 })
 
-const server_cmds = {
-  
-}
-
 console.log(`<Client> Press Ctrl+C to disconnect.`)
 console.log(`<Client> Connecting to server at ${server_address}`)
 timeout = setTimeout(timedOut, 5_000)
 
 socket.connect(port, host, async () => {
   clearTimeout(timeout)
-  socket.write(`/on_join username="${username}"`)
   console.log(`<Client> You're connected. Say hi!`)
   while(true) {
     const str = await prompt(`[${username}]> `)

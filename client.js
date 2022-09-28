@@ -1,7 +1,7 @@
 const { Socket } = require('net')
 const readline = require('readline')
 // const { existsSync, writeFileSync } = require('fs')
-const { stdin, stdout, stderr, exit, argv } = process
+const { stdin, stdout, exit, argv } = process
 
 if(argv.length < 5) {
   console.log(`Usage: <program_name> <ip> <port> <username>      
@@ -25,6 +25,7 @@ const rl = readline.createInterface({
 
 const socket = new Socket()
 
+const timeout_time = 5_000
 let timeout
 
 socket.on('error', (err) => {
@@ -35,12 +36,12 @@ socket.on('error', (err) => {
 
 socket.on('data', (data) => {
   clearTimeout(timeout)
-  timeout = setTimeout(timedOut, 5_000)
+  timeout = setTimeout(timed_out, timeout_time)
   const str = data.toString()
   if(str === '\0') return
   rl.pause()
   stdout.write('\n')
-  resetCursor()
+  reset_cursor()
   console.log(str)
   stdout.write(rl.getPrompt())
   rl.resume()
@@ -48,40 +49,28 @@ socket.on('data', (data) => {
 
 console.log(`<Client> Press Ctrl+C to disconnect.`)
 console.log(`<Client> Connecting to server at ${server_address}`)
-timeout = setTimeout(timedOut, 5_000)
+timeout = setTimeout(timed_out, 5_000)
 
 socket.connect(port, host, async () => {
   clearTimeout(timeout)
+  socket.write(JSON.stringify({ type: 'setup', username }))
   console.log(`<Client> You're connected. Say hi!`)
   while(true) {
     const str = await prompt(`[${username}]> `)
-    resetCursor()
+    reset_cursor()
     if(str.length === 0) continue
     socket.write(str)
-    await awaitData().catch(timedOut)
+    await new Promise((resolve) => socket.once('data', resolve))
   }
 })
 
-function resetCursor() {
+function reset_cursor() {
   readline.moveCursor(stdout, 0, -1)
   readline.clearLine(stdout, 0)
   readline.cursorTo(stdout, 0)
 }
 
-/**
- * Wait 5 seconds for the server's response.
- * Resolve with the data received.
- * Reject if the server took too long.
- * @returns {Promise<Buffer>}
- */
-async function awaitData() {
-  return new Promise((resolve, reject) => {
-    setTimeout(reject, 5_000)
-    socket.once('data', resolve)
-  })
-}
-
-function timedOut() {
+function timed_out() {
   console.error('\nConnection to server timed out')
   exit(1)
 }
@@ -95,7 +84,5 @@ async function prompt(query) {
   if(typeof query !== 'string')
     throw TypeError()
 
-  return new Promise(resolve => rl.question(query, ans => {
-    resolve(ans)
-  }))
+  return new Promise(resolve => rl.question(query, (answer) => resolve(answer)))
 }

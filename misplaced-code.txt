@@ -1,0 +1,68 @@
+const commands = {
+  on_join([ username ]) {
+    if(!/^username="(.+)"$/.test(username)) {
+      whisper_stoc(socket, 'Your username field is empty. You will be disconnected. Please reconnect with a proper username.')
+      disconnect_client(socket)
+      return
+    }
+    socket.username = username.substring(1+username.indexOf('"'), username.lastIndexOf('"'))
+    username_socket.set(socket.username, socket)
+    welcome(socket.username)
+  },
+  on_leave() {
+    announce(`[${socket.username}] has disconnected :(`)
+    disconnect_client(socket)
+  },
+  help() {
+    whisper_stoc(socket, 'List of all commands below (type without quotes):')
+    whisper_stoc(socket, '"/help" Displays this message.')
+    whisper_stoc(socket, '"/ch_name <new_name>" Changes your username to <new_name>.')
+    whisper_stoc(socket, '"/whisper <[username]> <message>" Send a private message.')
+  },
+  ch_name([ new_username ]) {
+    if(!new_username) {
+      whisper_stoc(socket, 'Incorrect usage of "/ch_name".')
+      whisper_stoc(socket, 'Usage: /ch_name <new_username>')
+      return
+    }
+    announce(`[${socket.username}] has changed their name to [${new_username}]`)
+    username_socket.delete(socket.username)
+    socket.username = new_username
+    username_socket.set(socket.username, socket)
+  },
+  whisper([ recipient_name, ...message ]) {
+    function usage() {
+      whisper_stoc(socket, 'whisper: Incorrect usage.')
+      whisper_stoc(socket, 'whisper: Usage: /whisper <username> <message>')
+    }
+    if(!recipient_name) { usage(); return }
+    message = message.join(' ')
+    if(message.length === 0) { usage(); return }
+    const recipient_sock = username_socket.get(recipient_name)
+    if(!recipient_sock) {
+      whisper_stoc(socket, 'whisper: The specified user does not exist in this server.')
+      return
+    }
+    whisper_ctoc(socket, recipient_sock, message)
+  }
+}
+
+/**
+ * Whisper a message from the server to a client.
+ * @param {Socket} socket 
+ * @param {string} msg 
+ */
+function whisper_stoc(socket, msg) {
+  socket.write(`{From <Server>} ${msg}`)
+}
+
+/**
+ * Pass a whisper message from its sender to its recipient
+ * @param {Socket} sock_from From this socket
+ * @param {Socket} sock_to To this socket
+ * @param {string} msg 
+ */
+function whisper_ctoc(sock_from, sock_to, msg) {
+  sock_from.write(`{To [${sock_to.username}]} ${msg}`)
+  sock_to.write(`{From [${sock_from.username}]} ${msg}`)
+}

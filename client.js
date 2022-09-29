@@ -4,17 +4,28 @@ const readline = require('readline')
 const { stdin, stdout, exit, argv } = process
 
 if(argv.length < 5) {
-  console.log(`Usage: <program_name> <ip> <port> <username>      
+  console.log(
+`Usage: <program_name> <ip> <port> <username>      
     <ip>           Server IP address
     <port>         Server port
     <username>     Your username to be used in chat`)
-  process.exit(0)
+  exit(1)
 }
 
 const host = argv[2]
 const port = Number.parseInt(argv[3])
 let username = argv[4]
 const server_address = `${host}:${port}`
+
+client_log(`Current configuration:`)
+client_log(`Server IP: ${host}`)
+client_log(`Server port: ${port}`)
+client_log(`Username: ${username}`)
+{
+  const x = prompt(`Continue connecting to server? (Y/n) `)
+  
+}
+
 
 // add known_servers.json file parsing
 
@@ -25,9 +36,6 @@ const rl = readline.createInterface({
 
 const socket = new Socket()
 
-const timeout_time = 5_000
-let timeout
-
 socket.on('error', (err) => {
   console.error(err)
   console.error(`\nThe error above occurred when connecting to the server.\nPlease make sure you have entered the correct address and port in the config file.`)
@@ -35,28 +43,24 @@ socket.on('error', (err) => {
 })
 
 socket.on('data', (data) => {
-  clearTimeout(timeout)
-  timeout = setTimeout(timed_out, timeout_time)
   const str = data.toString()
-  if(str === '\0') return
   rl.pause()
   stdout.write('\n')
   reset_cursor()
-  console.log(str)
-  stdout.write(rl.getPrompt())
+  stdout.write(str+'\n'+rl.getPrompt()+rl.line)
   rl.resume()
 })
 
-console.log(`<Client> Press Ctrl+C to disconnect.`)
-console.log(`<Client> Connecting to server at ${server_address}`)
-timeout = setTimeout(timed_out, 5_000)
+client_log(`Press Ctrl+C to disconnect.`)
+client_log(`Connecting to server at ${server_address}`)
+let connection_timeout = setTimeout(timed_out, 5_000)
 
 socket.connect(port, host, async () => {
-  clearTimeout(timeout)
+  clearTimeout(connection_timeout)
   socket.write(JSON.stringify({ type: 'setup', username }))
-  console.log(`<Client> You're connected. Say hi!`)
+  client_log(`You're connected. Say hi!`)
   while(true) {
-    const str = await prompt(`[${username}]> `)
+    const str = await prompt(`> `)
     reset_cursor()
     if(str.length === 0) continue
     socket.write(str)
@@ -71,18 +75,13 @@ function reset_cursor() {
 }
 
 function timed_out() {
-  console.error('\nConnection to server timed out')
+  client_error('Connection to server timed out')
   exit(1)
 }
 
-/**
- * Read a line from `stdin` after writing `query` to `stdout`.
- * @param {string} query 
- * @returns {Promise<string>}
- */
 async function prompt(query) {
-  if(typeof query !== 'string')
-    throw TypeError()
-
   return new Promise(resolve => rl.question(query, (answer) => resolve(answer)))
 }
+
+function client_log(x) { console.log(`<Client:Log> ${x}`) }
+function client_error(x) { console.error(`<Client:Error> ${x}`) }

@@ -1,19 +1,34 @@
 from socket import socket
-from sys import argv
+from threading import Thread
+from sys import argv, stdout, stdin
+from json import JSONEncoder
 
-if len(argv) < 4:
-  print(f'Usage: {argv[0]} <ip> <port> <username>')
-  print('    <ip>           Server IP address')
-  print('    <port>         Server port')
-  print('    <username>     Your username to be used in chat')
-  exit(0)
+def listen_for_messages():
+  while True:
+    message = my_socket.recv(1024).decode()
+    stdout.write('\r\x1B[2K'+message+'\n'+prompt)
 
-my_socket = socket()
+if __name__ == '__main__':
+  if len(argv) < 4:
+    print(f'Usage: {argv[0]} <ip> <port> <username>')
+    print('    <ip>           Server IP address')
+    print('    <port>         Server port')
+    print('    <username>     Your username to be used in chat')
+    exit(1)
 
-my_socket.connect((argv[1], int(argv[2])))
+  prompt = f'[{argv[3]}]> '
 
-my_socket.send(bytes(f'name="{argv[3]}"', 'utf-8'))
+  my_socket = socket()
+  my_socket.connect((argv[1], int(argv[2])))
+  my_socket.send(bytes(JSONEncoder().encode({ 'type': 'setup', 'username': argv[3] }), 'utf-8'))
+  print(my_socket.recv(1024).decode('utf-8'))
 
-while(True):
-  msg = input('> ')
-  my_socket.send(bytes(msg, 'utf-8'))
+  listener = Thread(target=listen_for_messages)
+  listener.daemon = True
+  listener.start()
+
+  while True:
+    msg = input(prompt)
+    stdout.write('\x1B[1A\r\x1B[2K')
+    if len(msg) == 0: continue
+    my_socket.send(bytes(msg, 'utf-8'))

@@ -23,7 +23,8 @@ client_log(`Server port: ${port}`)
 client_log(`Username: ${username}`)
 {
   const x = prompt(`Continue connecting to server? (Y/n) `)
-  
+  if(!x || x.toLowerCase() === 'y');
+  else exit(0)
 }
 
 
@@ -79,6 +80,11 @@ function timed_out() {
   exit(1)
 }
 
+/**
+ * Mimicking Python's input().
+ * @param {string} query 
+ * @returns {string}
+ */
 async function prompt(query) {
   return new Promise(resolve => rl.question(query, (answer) => resolve(answer)))
 }

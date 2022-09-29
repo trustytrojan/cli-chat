@@ -1,5 +1,5 @@
 const { Server } = require('net')
-const is_json = require('./is-json')
+const colored = require('colored.js')
 
 const port = 8080
 
@@ -14,19 +14,16 @@ const server = new Server((socket) => {
   addr_socket.set(socket.addr, socket)
 
   socket.on('data', (data) => {
-    const str = data.toString()
-    console.log(`Incoming data from [${socket.addr}]: \`${str}\``)
-    try {
-      const obj = JSON.parse(str)
-      switch(obj.type) {
-        case 'setup':
-          socket.username = obj.username
-          welcome(socket)
-          break
-      }
-      return
-    } finally {
-      send_all(`${str}`)
+    const obj = JSON.parse(data.toString())
+    console.log(`Incoming data from [${socket.addr}]:`, obj)
+    switch(obj.type) {
+      case 'setup':
+        socket.username = obj.username
+        welcome(socket)
+        break
+      case 'message':
+        send_all(`${colored.bold(`[${socket.username}]`)} ${obj.message}`)
+        break
     }
   })
 
@@ -70,7 +67,7 @@ function send_all(str) {
 
 function close() {
   for(const socket of addr_socket.values()) {
-    socket.write(`<Server:Shutdown> This server is shutting down. You will be disconnected.`)
+    socket.write(`<Server:Shutdown> This server has shut down.`)
     socket.end()
   }
   server.close()

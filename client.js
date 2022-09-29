@@ -14,7 +14,7 @@ function timed_out() {
   exit(1)
 }
 
-function client_log(x) { console.log(`${colored.bold('<Client:Log>')} ${x}`) }
+function client_log(x) { console.log(`${colored.blue.bold('<Client:Log>')} ${x}`) }
 function client_error(x) { console.error(`${colored.red.bold('<Client:Error>')} ${x}`) }
 
 Socket.prototype.send_json = function(obj) { this.write(JSON.stringify(obj)) }
@@ -27,7 +27,7 @@ async function main() {
   client_log(`Server port: ${port}`)
   client_log(`Username: ${username}`)
   {
-    const answer = await input(`Continue connecting to server? [Yes] `)
+    const answer = await input(`${colored.purple.bold('Continue connecting to server?')} [Yes] `)
     if(answer.length === 0 || answer === 'yes' || answer === 'y');
     else {
       console.log(`Exiting without saving.`)

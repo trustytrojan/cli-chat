@@ -30,13 +30,13 @@ const server = new Server((socket) => {
   socket.on('end', () => {
     console.log(`[${socket.addr}] has disconnected.`)
     goodbye(socket)
-    disconnect_client(socket)
+    destroy_socket(socket)
   })
 
   socket.on('error', (err) => {
     console.error(`Error involving client ${socket.addr}!`)
     console.error(err)
-    disconnect_client(socket)
+    destroy_socket(socket)
   })
 })
 
@@ -46,18 +46,18 @@ server.listen(port)
 
 console.log(`Server started on port ${port}`)
 
-function disconnect_client(socket) {
+function destroy_socket(socket) {
   addr_socket.delete(socket.addr)
   socket.destroy()
   console.log(`Destroyed connection with [${socket.addr}]`)
 }
 
 function welcome(socket) {
-  send_all(`<Server:Welcome> [${socket.username}] has connected to the server. Say hi!`)
+  send_all(`${colored.green.bold('<Server:Welcome>')} [${socket.username}] has connected to the server. Say hi!`)
 }
 
 function goodbye(socket) {
-  send_all(`<Server:Goodbye> [${socket.username}] has disconnected :(`)
+  send_all(`${colored.green.dim('<Server:Goodbye>')} [${socket.username}] has disconnected :(`)
 }
 
 function send_all(str) {
@@ -67,7 +67,7 @@ function send_all(str) {
 
 function close() {
   for(const socket of addr_socket.values()) {
-    socket.write(`<Server:Shutdown> This server has shut down.`)
+    socket.write(`${colored.red.bold('<Server:Shutdown>')} This server has shut down.`)
     socket.end()
   }
   server.close()

@@ -1,3 +1,6 @@
+# Author: github.com/trustytrojan
+# TCP Chat Client in Python
+
 from operator import itemgetter
 from socket import socket
 from sys import stdout

@@ -1,3 +1,6 @@
+// Author: github.com/trustytrojan
+// TCP Chat Client in JavaScript
+
 const { Socket } = require('net')
 const { stdout, exit } = process
 const { readline, rl, input } = require('./input')
@@ -16,26 +19,35 @@ function timed_out() {
 
 function client_log(x) { console.log(`${colored.blue.bold('<Client:Log>')} ${x}`) }
 function client_error(x) { console.error(`${colored.red.bold('<Client:Error>')} ${x}`) }
+async function client_input(x) { return await input(`${colored.purple.bold('<Client:Input>')} ${x}`) }
 
 Socket.prototype.send_json = function(obj) { this.write(JSON.stringify(obj)) }
 
 async function main() {
-  const { host, port, username } = await require('./client-config-selector')()
+  // run configuration selector
+  const { host, port, username } = await require('./config-selector')()
 
+  // display chosen configuration to user
   client_log(`Current configuration:`)
   client_log(`Server IP: ${host}`)
   client_log(`Server port: ${port}`)
   client_log(`Username: ${username}`)
-  {
-    const answer = await input(`${colored.purple.bold('Continue connecting to server?')} [Yes] `)
-    if(answer.length === 0 || answer === 'yes' || answer === 'y');
-    else {
-      console.log(`Exiting without saving.`)
+
+  /* confirm with user to connect */ {
+    const answer = await client_input('Continue connecting to server? [Yes] ')
+    if(!(answer.length === 0 || answer === 'yes' || answer === 'y')) {
+      client_log(`Exiting.`)
       exit(0)
     }
   }
       
   const socket = new Socket()
+
+  socket.on('end', () => {
+    client_log('You were disconnected from the server.')
+    client_log('Now exiting.')
+    exit(0)
+  })
   
   socket.on('data', (data) => {
     const str = data.toString()
@@ -58,7 +70,7 @@ async function main() {
       const message = await input(`> `)
       reset_cursor()
       if(message.length === 0) continue
-      socket.send_json({ type: 'message', message })
+      socket.write(message)
       // wait for a response before restoring the prompt
       await new Promise((resolve) => socket.once('data', resolve))
     }

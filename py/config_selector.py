@@ -1,3 +1,5 @@
+# Author: github.com/trustytrojan
+
 from json import JSONDecoder
 
 config_filename = './cli-chat-config.json'

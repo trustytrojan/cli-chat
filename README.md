@@ -6,3 +6,4 @@ To write clients/servers (preferably clients) in as many languages as I can lear
 
 ### Challenges
 - terminal cursor manipulation
+- multithreading

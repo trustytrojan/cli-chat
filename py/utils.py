@@ -1,3 +1,5 @@
+# Author: github.com/trustytrojan
+
 from json import JSONEncoder
 from sys import stdout
 from threading import Thread

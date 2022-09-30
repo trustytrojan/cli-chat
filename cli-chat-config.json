@@ -3,5 +3,15 @@
     "host": "localhost",
     "port": 8080,
     "username": "client-js"
+  },
+  {
+    "host": "localhost",
+    "port": 8080,
+    "username": "client-py"
+  },
+  {
+    "host": "127.0.0.1",
+    "port": 8080,
+    "username": "client-c"
   }
 ]

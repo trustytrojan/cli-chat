@@ -14,8 +14,11 @@ const server = new Server((socket) => {
   addr_socket.set(socket.addr, socket)
 
   socket.on('data', (data) => {
-    const obj = JSON.parse(data.toString())
-    console.log(`Incoming data from [${socket.addr}]:`, obj)
+    console.log(`Incoming data from [${socket.addr}]`)
+    let obj
+    try { obj = JSON.parse(data.toString()) }
+    catch(err) { console.error(`Incoming data is not JSON!`); return }
+    console.log(obj)
     switch(obj.type) {
       case 'setup':
         socket.username = obj.username

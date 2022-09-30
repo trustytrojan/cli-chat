@@ -8,6 +8,7 @@ def config_choices(configs):
   for config in configs:
     choices_str += f'\n{num_choices}. Server: [{config["host"]}:{config["port"]}], Username: [{config["username"]}]'
     num_choices += 1
+  choices_str += f'\n{num_choices}. Create new config'
   return (num_choices, choices_str)
 
 def config_selector():

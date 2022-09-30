@@ -17,6 +17,9 @@ if __name__ == '__main__':
   # Connect to server
   my_socket.connect((host, port))
 
+  # Start listener thread
+  start_listener_thread(my_socket, prompt)
+
   # Send setup object
   ## Currently only needs to send the client's username
   send_setup(my_socket, username)

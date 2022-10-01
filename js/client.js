@@ -67,10 +67,12 @@ async function main() {
     socket.send_json({ type: 'setup', username })
     client_log(`You're connected. Say hi!`)
     while(true) {
-      const message = await input(`> `)
+      const _s = await input(`${colored.dim(`[${username}]`)} `)
       reset_cursor()
-      if(message.length === 0) continue
-      socket.write(message)
+      if(_s.length === 0) continue
+      if(_s.startsWith('/'))
+        parse_command(_s)
+      socket.write(_s)
       // wait for a response before restoring the prompt
       await new Promise((resolve) => socket.once('data', resolve))
     }

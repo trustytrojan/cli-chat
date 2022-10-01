@@ -1,8 +1,7 @@
 // Author: github.com/trustytrojan
 // TCP Chat Server in JavaScript
-
-const { Server, Socket } = require('net')
 const colored = require('colored.js')
+const { Server, Socket } = require('net')
 const { stdout, exit } = process
 
 const port = 8080
@@ -13,25 +12,33 @@ const addr_socket = new Map()
 // map sockets by the client's username (for use with whispers/private messages)
 // const username_socket = new Map()
 
-function server_incoming(addr, str) { console.log(`${colored.bright_cyan.bold('<Server:Incoming>')} [From ${addr}] "${str}"`) }
-function server_outgoing(addr, str) { console.log(`${colored.bright_purple.bold('<Server:Outgoing>')} [To ${addr}] "${str}"`) }
-function server_connection(addr) { console.log(`${colored.green.bold('<Server:Connection>')} [${addr}] has connected`) }
-function server_disconnection(addr) { console.log(`${colored.green.bold('<Server:Disonnection>')} [${addr}] has connected`) }
+// reduce server overhead by creating colored strings beforehand
+const colored_str = {
+  opened: colored.green.bold('<Server:Opened>'),
+  connection: colored.green.bold('<Server:Connection>'),
+  disconnection: colored.bright_black.bold('<Server:Disconnection>'),
+  client_error: colored.bright_black.bold('<Server:ClientError>'),
+  incoming_data: colored.cyan.bold('<Server:IncomingData>'),
+  welcome: colored.green.bold('<Server:Welcome>'),
+  goodbye: colored.bright_black.bold('<Server:Goodbye>'),
+  shutdown: colored.red.bold('<Server:Shutdown>'),
+  closed: colored.red.bold('<Server:Closed>')
+}
 
 const server = new Server((socket) => {
   socket.addr = `${socket.remoteAddress}:${socket.remotePort}`
-  server_connection(socket.addr)
+  console.log(`${colored_str.opened} [${socket.addr}] has connected`)
   addr_socket.set(socket.addr, socket)
 
   socket.on('data', (data) => {
     const str = data.toString()
-    server_incoming(socket.addr, str)
+    console.log(`${colored_str.incoming_data} [From ${socket.addr}] "${str}"`)
     try {
       const obj = JSON.parse(str)
       switch(obj.type) {
         case 'setup':
           socket.username = obj.username
-          send_all(`${colored.green.bold('<Server:Welcome>')} ${colored.bold(`[${socket.username}]`)} has connected to the server. Say hi!`)
+          send_all(`${colored_str.welcome} ${colored.bold(`[${socket.username}]`)} has connected to the server. Say hi!`)
           break
         case 'command':
           // re-implement eventually
@@ -42,12 +49,12 @@ const server = new Server((socket) => {
   })
 
   socket.on('end', () => {
-    server_disconnection(socket.addr)
+    console.log(`${colored_str.disconnection} [${socket.addr}] has disconnected`)
     close_socket(socket)
   })
 
   socket.on('error', (err) => {
-    console.error(`${colored.bright_black.bold('<Server:ClientError>')} [Involving ${socket.addr}]`)
+    console.error(`${colored_str.client_error} [Involving ${socket.addr}]`)
     console.error(err)
     close_socket(socket)
   })
@@ -57,7 +64,7 @@ process.on('SIGINT', close_server)
 
 server.listen(port)
 
-console.log(`${colored.green.bold('<Server:Opened>')} Listening on port ${colored.bold(port.toString())}`)
+console.log(`${colored_str.opened} Listening on port ${colored.bold(port.toString())}`)
 
 /** @param {Socket} socket */
 function close_socket(socket) {
@@ -65,19 +72,24 @@ function close_socket(socket) {
   socket.end()
   socket.destroy()
   console.log(`Destroyed socket for [${socket.addr}]`)
-  send_all(`${colored.bright_black.bold('<Server:Goodbye>')} ${colored.bold(`[${socket.username}]`)} has disconnected :(`)
+  send_all(`${colored_str.goodbye} ${colored.bold(`[${socket.username}]`)} has disconnected :(`)
 }
 
 /** @param {string} str */
 function send_all(str) {
-  server_outgoing('All', str)
-  for(const socket of addr_socket.values()) socket.write(str)
+  for(const socket of addr_socket.values())
+    socket.write(str)
 }
 
 function close_server() {
   stdout.write('\n')
-  send_all(`${colored.red.bold('<Server:Shutdown>')} This server has shut down.`)
+  for(const socket of addr_socket.values()) {
+    socket.write(`${colored_str.shutdown} This server has shut down.`)
+    socket.write('\x04');
+    socket.end()
+    socket.destroy()
+  }
   server.close()
-  console.log(`${colored.red.bold('<Server:Closed>')} Server has now closed. Exiting.`)
+  console.log(`${colored_str.closed} Server has now closed. Exiting.`)
   exit(0)
 }

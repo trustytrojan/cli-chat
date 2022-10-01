@@ -2,4 +2,3 @@
 
 default:
 	gcc -ljson-c client.c
-	./a.out

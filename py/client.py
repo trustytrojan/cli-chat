@@ -23,9 +23,9 @@ if __name__ == '__main__':
   # Start listener thread
   start_listener_thread(my_socket, prompt)
 
-  # Send setup object
+  # Send JSON to configure client details with the server
   ## Currently only needs to send the client's username
-  send_setup(my_socket, username)
+  send_setup_json(my_socket, username)
 
   # Input loop
   while True:

@@ -15,7 +15,6 @@ const addr_socket = new Map()
 
 function server_incoming(addr, str) { console.log(`${colored.bright_cyan.bold('<Server:Incoming>')} [From ${addr}] "${str}"`) }
 function server_outgoing(addr, str) { console.log(`${colored.bright_purple.bold('<Server:Outgoing>')} [To ${addr}] "${str}"`) }
-function server_client_message()
 function server_connection(addr) { console.log(`${colored.green.bold('<Server:Connection>')} [${addr}] has connected`) }
 function server_disconnection(addr) { console.log(`${colored.green.bold('<Server:Disonnection>')} [${addr}] has connected`) }
 

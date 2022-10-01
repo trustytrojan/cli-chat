@@ -4,11 +4,11 @@ from json import JSONEncoder
 from sys import stdout
 from threading import Thread
 
-def send_setup(socket, username):
+def send_setup_json(socket, username):
   socket.send(bytes(JSONEncoder().encode({ 'type': 'setup', 'username': username }), 'utf-8'))
 
 def send_msg(socket, msg):
-  socket.send(bytes(JSONEncoder().encode({ 'type': 'message', 'message': msg }), 'utf-8'))
+  socket.send(bytes(msg, 'utf-8'))
 
 def start_listener_thread(socket, prompt):
   def msg_listener_thread():

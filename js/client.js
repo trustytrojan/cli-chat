@@ -7,9 +7,9 @@ const { readline, rl, input } = require('./input')
 const colored = require('colored.js')
 
 function reset_cursor() {
-  readline.moveCursor(stdout, 0, -1)
-  readline.clearLine(stdout, 0)
-  readline.cursorTo(stdout, 0)
+  readline.moveCursor(stdout, 0, -1) // \x1B[1A
+  readline.cursorTo(stdout, 0) // \r
+  readline.clearLine(stdout, 0) // \x1B[2K
 }
 
 function timed_out() {

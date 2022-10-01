@@ -19,8 +19,10 @@ const char* wrap_msg_in_json();
 void send_setup_json();
 int connect_to_server();
 
+
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
 int my_socket;
-pthread_mutex_t lock;
 char* prompt = "> "; // eventually will be customiable
 
 int main() {
@@ -46,10 +48,11 @@ int main() {
   
   // User input loop
   while(1) {
-    pthread_mutex_lock(&lock);
     printf(prompt);
-    pthread_mutex_unlock(&lock);
+    fflush(stdout);
     fgets(input, 1024, stdin);
+    printf("\x1B[1A\r\x1b[2K");
+    fflush(stdout);
     size_t len = strlen(input);
     if(len == 1) continue;
     input[len-1] = 0;
@@ -63,10 +66,11 @@ int main() {
 void* msg_listener_thread(void* arg) {
   char buffer[1024];
   while(1) {
-    int bytes = read(my_socket, buffer, 1024);
-    buffer[bytes] = 0;
+    int len = read(my_socket, buffer, 1024);
+    buffer[len] = 0;
     pthread_mutex_lock(&lock);
     printf("\r\x1B[2K%s\n%s", buffer, prompt);
+    fflush(stdout);
     pthread_mutex_unlock(&lock);
   }
 }

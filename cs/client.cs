@@ -8,8 +8,7 @@ static class client {
   const string HOST = "localhost";
   const int PORT = 8080;
   const string USERNAME = "client-cs";
-  const string prompt = "\033[2;90m["+USERNAME+"] \033[0;39m";
-  const Mutex _lock = new Mutex();
+  const string prompt = "\x1B[2;90m["+USERNAME+"] \x1B[0;39m";
 
   class setup_obj {
     public string type { get; set; }
@@ -22,7 +21,7 @@ static class client {
     Socket socket = new Socket(ip_address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
     socket.Connect(new IPEndPoint(ip_address, PORT));
 
-    socket.Send(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new setup_obj{ type = "setup", username = USERNAME })));
+    socket.Send(Encoding.UTF8.GetBytes("{\"type\":\"setup\",\"username\":\"client-cs\"}"));
 
     Func<int> disconnected_from_server = () => {
       socket.Disconnect(false);
@@ -33,34 +32,36 @@ static class client {
 
     // Register Ctrl+C handler
     Console.CancelKeyPress += (sender, args) => {
-      Console.WriteLine("Ctrl+C pressed. Disconnecting from server and exiting.");
+      Console.WriteLine("\nCtrl+C pressed. Disconnecting from server and exiting.");
       disconnected_from_server();
     };
+
+    Mutex mutex = new Mutex();
 
     // Create and start listener thread
     Thread listener = new Thread(new ThreadStart(() => {
       byte[] buffer = new byte[1024];
       while(true) {
         int num_bytes = socket.Receive(buffer);
-        // _lock.WaitOne();
+        mutex.WaitOne();
         if(buffer[0] == (byte)('\x4')) {
           Console.Write('\r');
           Console.WriteLine("You were disconnected from the server. Exiting.");
           disconnected_from_server();
         }
-        // Console.Write("\r\x1B[2K{0}\n{1}", Encoding.UTF8.GetString(buffer, 0, num_bytes), prompt);
-        // _lock.ReleaseMutex();
+        Console.Write("\r\x1B[2K{0}\n{1}", Encoding.UTF8.GetString(buffer, 0, num_bytes), prompt);
+        mutex.ReleaseMutex();
       }
     }));
     listener.Start();
 
     // User input loop
     while(true) {
-      _lock.WaitOne();
-      Console.Write("> ");
-      string? input = Console.ReadLine();
-      // Console.Write("\x1B[1A\r\x1b[2K");
-      _lock.ReleaseMutex();
+      //mutex.WaitOne();
+      Console.Write(prompt);
+      string input = Console.ReadLine();
+      Console.Write("\x1B[1A\r\x1b[2K");
+      //mutex.ReleaseMutex();
       if(input == null || input.Length == 0) continue;
       socket.Send(Encoding.UTF8.GetBytes(input));
     }

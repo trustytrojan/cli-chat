@@ -1,3 +1,5 @@
+// Author: github.com/trustytrojan
+
 #include "everything-else.h"
 
 void client_log(const char* msg) {

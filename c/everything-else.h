@@ -1,3 +1,5 @@
+// Author: github.com/trustytrojan
+
 #ifndef everything_else_h
 #define everything_else_h
 

@@ -1,4 +1,9 @@
-﻿using System;
+﻿// Author: github.com/trustytrojan
+// This implementation was compiled with Mono 6.12,
+// however we have no JSON support because Mono doesn't
+// compile the latest C# version.
+
+using System;
 using System.Threading;
 using System.Net;
 using System.Net.Sockets;
@@ -21,6 +26,7 @@ static class client {
     Socket socket = new Socket(ip_address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
     socket.Connect(new IPEndPoint(ip_address, PORT));
 
+    // No system library for JSON :(
     socket.Send(Encoding.UTF8.GetBytes("{\"type\":\"setup\",\"username\":\"client-cs\"}"));
 
     Func<int> disconnected_from_server = () => {
